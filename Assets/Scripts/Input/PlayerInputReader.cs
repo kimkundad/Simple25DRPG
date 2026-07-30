@@ -17,6 +17,9 @@ namespace Simple25DRPG.Input
         [Tooltip("Virtual joystick used for Android builds. Editor and desktop builds continue to use the Input System action.")]
         [SerializeField] private VirtualJoystick _virtualJoystick;
 
+        [Tooltip("Use the virtual joystick in the Unity Editor for testing. Android builds always use the joystick.")]
+        [SerializeField] private bool _useVirtualJoystickInEditor;
+
         private bool _useVirtualJoystick;
         private bool _missingJoystickWarningLogged;
 
@@ -29,6 +32,8 @@ namespace Simple25DRPG.Input
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             _useVirtualJoystick = true;
+#elif UNITY_EDITOR
+            _useVirtualJoystick = _useVirtualJoystickInEditor;
 #else
             _useVirtualJoystick = false;
 #endif

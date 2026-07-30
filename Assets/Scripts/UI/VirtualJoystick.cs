@@ -15,6 +15,8 @@ namespace Simple25DRPG.UI
         [Tooltip("RectTransform moved visually while the player drags the joystick.")]
         [SerializeField] private RectTransform _handle;
 
+        private Canvas _canvas;
+        private UnityEngine.Camera _eventCamera;
         private float _radius;
 
         /// <summary>
@@ -24,10 +26,7 @@ namespace Simple25DRPG.UI
 
         private void Awake()
         {
-            if (_background == null)
-            {
-                _background = transform as RectTransform;
-            }
+            _canvas = GetComponentInParent<Canvas>();
 
             if (_background == null || _handle == null)
             {
@@ -36,7 +35,21 @@ namespace Simple25DRPG.UI
                 return;
             }
 
+            if (_canvas == null)
+            {
+                Debug.LogWarning($"{nameof(VirtualJoystick)} on {name} requires a parent Canvas.", this);
+                enabled = false;
+                return;
+            }
+
+            _eventCamera = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
             _radius = Mathf.Min(_background.rect.width, _background.rect.height) * 0.5f;
+
+            if (_radius <= 0f)
+            {
+                Debug.LogWarning($"{nameof(VirtualJoystick)} on {name} has an invalid background radius.", this);
+                enabled = false;
+            }
         }
 
         /// <summary>
@@ -45,6 +58,9 @@ namespace Simple25DRPG.UI
         /// <param name="eventData">Pointer data provided by Unity's EventSystem.</param>
         public void OnPointerDown(PointerEventData eventData)
         {
+#if UNITY_EDITOR
+            Debug.Log("VirtualJoystick pointer down.", this);
+#endif
             UpdateDirection(eventData);
         }
 
@@ -54,6 +70,9 @@ namespace Simple25DRPG.UI
         /// <param name="eventData">Pointer data provided by Unity's EventSystem.</param>
         public void OnDrag(PointerEventData eventData)
         {
+#if UNITY_EDITOR
+            Debug.Log("VirtualJoystick drag.", this);
+#endif
             UpdateDirection(eventData);
         }
 
@@ -63,20 +82,23 @@ namespace Simple25DRPG.UI
         /// <param name="eventData">Pointer data provided by Unity's EventSystem.</param>
         public void OnPointerUp(PointerEventData eventData)
         {
+#if UNITY_EDITOR
+            Debug.Log("VirtualJoystick pointer up.", this);
+#endif
             Direction = Vector2.zero;
             _handle.anchoredPosition = Vector2.zero;
         }
 
         private void UpdateDirection(PointerEventData eventData)
         {
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_background, eventData.position, eventData.pressEventCamera, out Vector2 localPoint))
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_background, eventData.position, _eventCamera, out Vector2 localPoint))
             {
                 return;
             }
 
-            Vector2 clampedPoint = Vector2.ClampMagnitude(localPoint, _radius);
-            _handle.anchoredPosition = clampedPoint;
-            Direction = _radius > Mathf.Epsilon ? clampedPoint / _radius : Vector2.zero;
+            Vector2 handlePosition = Vector2.ClampMagnitude(localPoint, _radius);
+            _handle.anchoredPosition = handlePosition;
+            Direction = handlePosition / _radius;
         }
     }
 }
