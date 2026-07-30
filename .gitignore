@@ -1,0 +1,109 @@
+############################
+# Unity Generated Folders
+############################
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+UserSettings/
+
+############################
+# Addressables
+############################
+
+Assets/AddressableAssetsData/*/*.bin*
+
+############################
+# Visual Studio / VS Code
+############################
+
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+############################
+# Rider
+############################
+
+.idea/
+
+############################
+# JetBrains
+############################
+
+*.DotSettings.user
+
+############################
+# OS Files
+############################
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+############################
+# Crash Reports
+############################
+
+sysinfo.txt
+
+############################
+# Android
+############################
+
+.gradle/
+
+############################
+# Generated Packages
+############################
+
+*.apk
+*.aab
+*.ap_
+
+############################
+# Unity Cloud
+############################
+
+crashlytics-build.properties
+
+############################
+# Ignore Nothing Important
+############################
+
+# Keep all Assets
+!Assets/**
+
+# Keep all Packages
+!Packages/**
+
+# Keep all ProjectSettings
+!ProjectSettings/**
+
+# Keep documentation
+!docs/**
+
+# Keep meta files
+!*.meta

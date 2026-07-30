@@ -1,0 +1,28 @@
+# Unity YAML
+*.cs text
+*.shader text
+*.cginc text
+*.compute text
+
+*.unity text merge=unityyamlmerge eol=lf
+*.prefab text merge=unityyamlmerge eol=lf
+*.asset text merge=unityyamlmerge eol=lf
+*.mat text merge=unityyamlmerge eol=lf
+*.anim text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.meta text merge=unityyamlmerge eol=lf
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.psd binary
+
+# Audio
+*.wav binary
+*.mp3 binary
+*.ogg binary
+
+# Models
+*.fbx binary
+*.blend binary
