@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Simple25DRPG.UI;
@@ -13,6 +14,9 @@ namespace Simple25DRPG.Input
         [Tooltip("Input System action that provides player movement as a Vector2.")]
         [SerializeField] private InputActionReference _moveAction;
 
+        [Tooltip("Input System action that requests a player attack.")]
+        [SerializeField] private InputActionReference _attackAction;
+
         [Header("Mobile Input")]
         [Tooltip("Virtual joystick used for Android builds. Editor and desktop builds continue to use the Input System action.")]
         [SerializeField] private VirtualJoystick _virtualJoystick;
@@ -22,6 +26,11 @@ namespace Simple25DRPG.Input
 
         private bool _useVirtualJoystick;
         private bool _missingJoystickWarningLogged;
+
+        /// <summary>
+        /// Raised when the player requests an attack.
+        /// </summary>
+        public event Action AttackPressed;
 
         /// <summary>
         /// Gets the latest movement input value from the active input source.
@@ -44,36 +53,43 @@ namespace Simple25DRPG.Input
             if (_useVirtualJoystick)
             {
                 ValidateVirtualJoystick();
-                return;
             }
-
-            if (_moveAction == null || _moveAction.action == null)
+            else if (_moveAction == null || _moveAction.action == null)
             {
                 Debug.LogWarning($"{nameof(PlayerInputReader)} on {name} is missing a Move InputActionReference.", this);
+            }
+            else
+            {
+                _moveAction.action.performed += OnMovePerformed;
+                _moveAction.action.canceled += OnMoveCanceled;
+                _moveAction.action.Enable();
+            }
+
+            if (_attackAction == null || _attackAction.action == null)
+            {
+                Debug.LogWarning($"{nameof(PlayerInputReader)} on {name} is missing an Attack InputActionReference.", this);
                 return;
             }
 
-            _moveAction.action.performed += OnMovePerformed;
-            _moveAction.action.canceled += OnMoveCanceled;
-            _moveAction.action.Enable();
+            _attackAction.action.performed += OnAttackPerformed;
+            _attackAction.action.Enable();
         }
 
         private void OnDisable()
         {
-            if (_useVirtualJoystick)
+            if (!_useVirtualJoystick && _moveAction != null && _moveAction.action != null)
             {
-                MoveInput = Vector2.zero;
-                return;
+                _moveAction.action.performed -= OnMovePerformed;
+                _moveAction.action.canceled -= OnMoveCanceled;
+                _moveAction.action.Disable();
             }
 
-            if (_moveAction == null || _moveAction.action == null)
+            if (_attackAction != null && _attackAction.action != null)
             {
-                return;
+                _attackAction.action.performed -= OnAttackPerformed;
+                _attackAction.action.Disable();
             }
 
-            _moveAction.action.performed -= OnMovePerformed;
-            _moveAction.action.canceled -= OnMoveCanceled;
-            _moveAction.action.Disable();
             MoveInput = Vector2.zero;
         }
 
@@ -95,6 +111,19 @@ namespace Simple25DRPG.Input
         private void OnMoveCanceled(InputAction.CallbackContext context)
         {
             MoveInput = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Requests an attack using the same path as Input System callbacks and future mobile UI buttons.
+        /// </summary>
+        public void RequestAttack()
+        {
+            AttackPressed?.Invoke();
+        }
+
+        private void OnAttackPerformed(InputAction.CallbackContext context)
+        {
+            RequestAttack();
         }
 
         private void ValidateVirtualJoystick()
