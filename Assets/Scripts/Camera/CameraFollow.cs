@@ -64,5 +64,23 @@ namespace Simple25DRPG.Camera
                 _canFollow = false;
             }
         }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (_target == null || _settings == null)
+            {
+                return;
+            }
+
+            Vector3 targetPosition = _target.position;
+            Vector3 desiredCameraPosition = targetPosition + _settings.Offset;
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawSphere(targetPosition, 0.25f);
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(desiredCameraPosition, 0.25f);
+            Gizmos.DrawLine(targetPosition, desiredCameraPosition);
+        }
     }
 }

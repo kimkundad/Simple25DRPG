@@ -34,5 +34,11 @@ namespace Simple25DRPG.Camera
         /// Gets the approximate time for the camera to reach the target position.
         /// </summary>
         public float SmoothTime => _smoothTime;
+
+        private void OnValidate()
+        {
+            _followSpeed = Mathf.Max(0f, _followSpeed);
+            _smoothTime = Mathf.Max(0f, _smoothTime);
+        }
     }
 }
