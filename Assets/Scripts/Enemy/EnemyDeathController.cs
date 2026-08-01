@@ -8,8 +8,6 @@ namespace Simple25DRPG.Enemy
     /// </summary>
     public sealed class EnemyDeathController : MonoBehaviour
     {
-        private static readonly int DeathTrigger = Animator.StringToHash("Death");
-
         [Header("Dependencies")]
         [Tooltip("Health component that raises the death event.")]
         [SerializeField] private EnemyHealth _health;
@@ -19,9 +17,6 @@ namespace Simple25DRPG.Enemy
 
         [Tooltip("Settings asset that controls death cleanup behavior.")]
         [SerializeField] private EnemyDeathSettings _settings;
-
-        [Tooltip("Optional Animator that receives the Death trigger.")]
-        [SerializeField] private Animator _animator;
 
         [Tooltip("CharacterController disabled after death.")]
         [SerializeField] private CharacterController _characterController;
@@ -46,11 +41,6 @@ namespace Simple25DRPG.Enemy
             if (_enemyController == null)
             {
                 _enemyController = GetComponent<EnemyController>();
-            }
-
-            if (_animator == null)
-            {
-                _animator = GetComponent<Animator>();
             }
 
             if (_characterController == null)
@@ -93,7 +83,6 @@ namespace Simple25DRPG.Enemy
 
             StopEnemyBehavior();
             DisableHitDetection();
-            PlayDeathAnimation();
             ScheduleDestroy();
         }
 
@@ -131,16 +120,6 @@ namespace Simple25DRPG.Enemy
                     _combatColliders[i].enabled = false;
                 }
             }
-        }
-
-        private void PlayDeathAnimation()
-        {
-            if (!_settings.PlayAnimation || _animator == null)
-            {
-                return;
-            }
-
-            _animator.SetTrigger(DeathTrigger);
         }
 
         private void ScheduleDestroy()

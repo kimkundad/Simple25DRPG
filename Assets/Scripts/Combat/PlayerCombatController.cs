@@ -1,5 +1,6 @@
 using System;
 using Simple25DRPG.Input;
+using Simple25DRPG.Player;
 using UnityEngine;
 
 namespace Simple25DRPG.Combat
@@ -11,16 +12,12 @@ namespace Simple25DRPG.Combat
     {
         private const int MaxHits = 16;
 
-        // Animator setup: add an Attack trigger parameter, transition into an attack animation,
-        // then return to locomotion after the animation finishes.
-        private static readonly int AttackTrigger = Animator.StringToHash("Attack");
-
         [Header("Dependencies")]
         [Tooltip("Input reader that raises attack requests.")]
         [SerializeField] private PlayerInputReader _inputReader;
 
-        [Tooltip("Animator that receives the Attack trigger.")]
-        [SerializeField] private Animator _animator;
+        [Tooltip("Animation controller that receives attack animation requests.")]
+        [SerializeField] private PlayerAnimationController _animationController;
 
         [Tooltip("Settings asset that controls attack timing, size, damage, and hittable layers.")]
         [SerializeField] private AttackSettings _attackSettings;
@@ -29,7 +26,7 @@ namespace Simple25DRPG.Combat
         [SerializeField] private Transform _attackOrigin;
 
         private readonly Collider[] _hitResults = new Collider[MaxHits];
-        private readonly IDamageable[] _damagedTargets = new IDamageable[MaxHits];
+        private readonly Component[] _damagedTargets = new Component[MaxHits];
         private float _nextAttackTime;
         private bool _isValid;
 
@@ -40,9 +37,9 @@ namespace Simple25DRPG.Combat
                 _inputReader = GetComponent<PlayerInputReader>();
             }
 
-            if (_animator == null)
+            if (_animationController == null)
             {
-                _animator = GetComponent<Animator>();
+                _animationController = GetComponent<PlayerAnimationController>();
             }
 
             ValidateDependencies();
@@ -77,7 +74,7 @@ namespace Simple25DRPG.Combat
             }
 
             _nextAttackTime = Time.time + _attackSettings.AttackCooldown;
-            _animator.SetTrigger(AttackTrigger);
+            _animationController.PlayAttack();
 
             // This is intentionally isolated so an animation event can call it later.
             PerformAttackHitDetection();
@@ -107,18 +104,18 @@ namespace Simple25DRPG.Combat
             for (int i = 0; i < hitCount; i++)
             {
                 Collider hit = _hitResults[i];
-                if (hit == null || !TryGetDamageable(hit, out IDamageable damageable) || HasAlreadyDamaged(damageable, damagedCount))
+                if (hit == null || !TryGetDamageable(hit, out IDamageable damageable, out Component damageableComponent) || HasAlreadyDamaged(damageableComponent, damagedCount))
                 {
                     continue;
                 }
 
-                damageable.TakeDamage(_attackSettings.Damage);
-
                 if (damagedCount < _damagedTargets.Length)
                 {
-                    _damagedTargets[damagedCount] = damageable;
+                    _damagedTargets[damagedCount] = damageableComponent;
                     damagedCount++;
                 }
+
+                damageable.TakeDamage(_attackSettings.Damage);
             }
         }
 
@@ -141,9 +138,9 @@ namespace Simple25DRPG.Combat
                 return;
             }
 
-            if (_animator == null)
+            if (_animationController == null)
             {
-                Debug.LogWarning($"{nameof(PlayerCombatController)} on {name} requires an Animator.", this);
+                Debug.LogWarning($"{nameof(PlayerCombatController)} on {name} requires a PlayerAnimationController.", this);
                 return;
             }
 
@@ -162,10 +159,11 @@ namespace Simple25DRPG.Combat
             _isValid = true;
         }
 
-        private static bool TryGetDamageable(Collider hit, out IDamageable damageable)
+        private static bool TryGetDamageable(Collider hit, out IDamageable damageable, out Component damageableComponent)
         {
             if (hit.TryGetComponent(out damageable))
             {
+                damageableComponent = damageable as Component;
                 return true;
             }
 
@@ -174,6 +172,7 @@ namespace Simple25DRPG.Combat
             {
                 if (current.TryGetComponent(out damageable))
                 {
+                    damageableComponent = damageable as Component;
                     return true;
                 }
 
@@ -181,14 +180,15 @@ namespace Simple25DRPG.Combat
             }
 
             damageable = null;
+            damageableComponent = null;
             return false;
         }
 
-        private bool HasAlreadyDamaged(IDamageable damageable, int damagedCount)
+        private bool HasAlreadyDamaged(Component damageable, int damagedCount)
         {
             for (int i = 0; i < damagedCount; i++)
             {
-                if (ReferenceEquals(_damagedTargets[i], damageable))
+                if (_damagedTargets[i] == damageable)
                 {
                     return true;
                 }

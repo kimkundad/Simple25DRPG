@@ -21,6 +21,17 @@ namespace Simple25DRPG.Enemy
         [SerializeField] private Transform _target;
 
         private bool _isValid;
+        private float _movementPausedUntil;
+
+        /// <summary>
+        /// Gets whether the enemy is currently moving.
+        /// </summary>
+        public bool IsMoving { get; private set; }
+
+        /// <summary>
+        /// Gets the current movement speed normalized for animation.
+        /// </summary>
+        public float NormalizedMoveSpeed { get; private set; }
 
         /// <summary>
         /// Stops enemy movement and prevents future chase updates.
@@ -28,6 +39,26 @@ namespace Simple25DRPG.Enemy
         public void StopMovement()
         {
             _isValid = false;
+            SetMovementState(false);
+        }
+
+        /// <summary>
+        /// Pauses enemy chase movement for the requested duration.
+        /// </summary>
+        /// <param name="duration">Pause duration in seconds.</param>
+        public void PauseMovement(float duration)
+        {
+            if (duration <= 0f)
+            {
+                return;
+            }
+
+            _movementPausedUntil = Mathf.Max(_movementPausedUntil, Time.time + duration);
+            SetMovementState(false);
+
+#if UNITY_EDITOR
+            Debug.Log("Movement paused.", this);
+#endif
         }
 
         private void Awake()
@@ -68,18 +99,26 @@ namespace Simple25DRPG.Enemy
                 return;
             }
 
+            if (Time.time < _movementPausedUntil)
+            {
+                SetMovementState(false);
+                return;
+            }
+
             Vector3 toTarget = _target.position - transform.position;
             toTarget.y = 0f;
 
             float distance = toTarget.magnitude;
             if (distance > _settings.DetectionRange || distance <= _settings.StoppingDistance)
             {
+                SetMovementState(false);
                 return;
             }
 
             Vector3 direction = toTarget / distance;
             RotateToward(direction);
             _characterController.Move(direction * (_settings.MoveSpeed * Time.deltaTime));
+            SetMovementState(true);
         }
 
         private void OnDrawGizmosSelected()
@@ -140,6 +179,12 @@ namespace Simple25DRPG.Enemy
         {
             StopMovement();
             enabled = false;
+        }
+
+        private void SetMovementState(bool isMoving)
+        {
+            IsMoving = isMoving;
+            NormalizedMoveSpeed = isMoving ? 1f : 0f;
         }
     }
 }
