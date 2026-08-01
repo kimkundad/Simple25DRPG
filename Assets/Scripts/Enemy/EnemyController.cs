@@ -22,6 +22,14 @@ namespace Simple25DRPG.Enemy
 
         private bool _isValid;
 
+        /// <summary>
+        /// Stops enemy movement and prevents future chase updates.
+        /// </summary>
+        public void StopMovement()
+        {
+            _isValid = false;
+        }
+
         private void Awake()
         {
             if (_characterController == null)
@@ -130,7 +138,7 @@ namespace Simple25DRPG.Enemy
 
         private void HandleDied()
         {
-            _isValid = false;
+            StopMovement();
             enabled = false;
         }
     }
