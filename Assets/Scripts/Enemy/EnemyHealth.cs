@@ -22,6 +22,11 @@ namespace Simple25DRPG.Enemy
         public event Action<int, int> OnDamaged;
 
         /// <summary>
+        /// Raised after damage is applied. Parameters are damage amount and world position.
+        /// </summary>
+        public event Action<int, Vector3> DamageTaken;
+
+        /// <summary>
         /// Raised once when HP reaches zero.
         /// </summary>
         public event Action OnDied;
@@ -62,6 +67,7 @@ namespace Simple25DRPG.Enemy
             int appliedDamage = Mathf.Min(damage, _currentHp);
             _currentHp = Mathf.Clamp(_currentHp - damage, 0, _settings.MaxHp);
             OnDamaged?.Invoke(_currentHp, appliedDamage);
+            DamageTaken?.Invoke(appliedDamage, transform.position);
 
             if (_currentHp > 0)
             {
