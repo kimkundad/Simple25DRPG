@@ -9,6 +9,7 @@ namespace Simple25DRPG.Enemy
     public sealed class EnemyAnimationController : MonoBehaviour, IAnimationController
     {
         private static readonly int MoveSpeedParameter = Animator.StringToHash("MoveSpeed");
+        private static readonly int AttackTrigger = Animator.StringToHash("Attack");
         private static readonly int HitTrigger = Animator.StringToHash("Hit");
         private static readonly int DeathTrigger = Animator.StringToHash("Death");
 
@@ -180,6 +181,16 @@ namespace Simple25DRPG.Enemy
         /// </summary>
         public void PlayAttack()
         {
+#if UNITY_EDITOR
+            Debug.Log("Attack animation.", this);
+#endif
+
+            if (_animator == null)
+            {
+                return;
+            }
+
+            _animator.SetTrigger(AttackTrigger);
         }
     }
 }
