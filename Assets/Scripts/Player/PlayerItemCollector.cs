@@ -1,66 +1,78 @@
 using System;
-using System.Collections.Generic;
+using Simple25DRPG.Inventory;
 using Simple25DRPG.Items;
 using UnityEngine;
 
 namespace Simple25DRPG.Player
 {
     /// <summary>
-    /// Temporary in-memory item collector used until the inventory system exists.
+    /// Compatibility adapter that forwards item collection to PlayerInventory.
     /// </summary>
     public sealed class PlayerItemCollector : MonoBehaviour, IItemCollector
     {
-        private readonly Dictionary<string, int> _amountsByItemId = new Dictionary<string, int>();
+        [Header("Dependencies")]
+        [Tooltip("Inventory backend that owns all player item storage.")]
+        [SerializeField] private PlayerInventory _inventory;
 
         /// <summary>
-        /// Raised when this player successfully collects an item amount.
+        /// Raised when this adapter forwards a successful collection.
         /// </summary>
         public event Action<ItemData, int> ItemCollected;
 
-        /// <summary>
-        /// Attempts to collect an item amount.
-        /// </summary>
-        /// <param name="item">Item data being collected.</param>
-        /// <param name="amount">Amount being collected.</param>
-        /// <returns>True when the item was accepted.</returns>
-        public bool TryCollect(ItemData item, int amount)
+        private void Awake()
         {
-            if (item == null || amount <= 0 || string.IsNullOrWhiteSpace(item.Id))
+            if (_inventory == null)
             {
-                return false;
+                _inventory = GetComponent<PlayerInventory>();
             }
 
-            if (_amountsByItemId.TryGetValue(item.Id, out int currentAmount))
+            if (_inventory == null)
             {
-                _amountsByItemId[item.Id] = currentAmount + amount;
+                Debug.LogWarning($"{nameof(PlayerItemCollector)} on {name} requires PlayerInventory.", this);
+                enabled = false;
             }
-            else
+        }
+
+        private void OnEnable()
+        {
+            if (_inventory != null)
             {
-                _amountsByItemId.Add(item.Id, amount);
+                _inventory.ItemAdded += HandleItemAdded;
             }
+        }
 
-            ItemCollected?.Invoke(item, amount);
-
-#if UNITY_EDITOR
-            Debug.Log($"Player collected {amount} x {item.DisplayName}.", this);
-#endif
-
-            return true;
+        private void OnDisable()
+        {
+            if (_inventory != null)
+            {
+                _inventory.ItemAdded -= HandleItemAdded;
+            }
         }
 
         /// <summary>
-        /// Gets the currently collected amount for an item.
+        /// Attempts to collect an item amount by forwarding to PlayerInventory.
+        /// </summary>
+        /// <param name="item">Item data being collected.</param>
+        /// <param name="amount">Amount being collected.</param>
+        /// <returns>True when the inventory accepted the full amount.</returns>
+        public bool TryCollect(ItemData item, int amount)
+        {
+            return _inventory != null && _inventory.TryCollect(item, amount);
+        }
+
+        /// <summary>
+        /// Gets the currently collected amount from PlayerInventory.
         /// </summary>
         /// <param name="item">Item to query.</param>
-        /// <returns>Collected amount, or zero when none has been collected.</returns>
+        /// <returns>Collected amount, or zero when unavailable.</returns>
         public int GetAmount(ItemData item)
         {
-            if (item == null || string.IsNullOrWhiteSpace(item.Id))
-            {
-                return 0;
-            }
+            return _inventory != null ? _inventory.GetAmount(item) : 0;
+        }
 
-            return _amountsByItemId.TryGetValue(item.Id, out int amount) ? amount : 0;
+        private void HandleItemAdded(ItemData item, int amount)
+        {
+            ItemCollected?.Invoke(item, amount);
         }
     }
 }
